@@ -21,7 +21,7 @@ void setup() {
     .setPosition(20,10)
     .setSize(150,30)
     .setFont(font)
-    .setValue("192.168.0.136")
+    .setValue("192.168.0.100")
     .setFocus(true)
     ;
   cp5.addTextfield("target_port")
@@ -49,7 +49,7 @@ void setup() {
     .setPosition(360,80)
     .setSize(400,30)
     .setFont(font)
-    .setValue("ROSC message_id_hoge 0 0 1234 5678")
+    .setValue("test test_id 0 0 1234 5678")
     ;
 
   cp5.addBang("send")
@@ -60,19 +60,26 @@ void setup() {
     ;
     
   textFont(font);
-  textAlign(LEFT);
+  textAlign(LEFT, TOP);
 }
 
 void draw() {
   background(0);
   fill(255);
+  noStroke();
 
-  text("Do not press \r\nENTER", 20, 230);
+  fill(255, 0, 0);
+  textSize(12);
+  text("DO NOT PRESS ENTER KEY", 20, 200);
   
-  fill(100);
-  rect(200, 160, 520, 130);
+  fill(200);
+  text("MY PORT = " + OSC_MY_PORT, 20, 220);
+  
+  fill(50);
+  stroke(255);
+  rect(200, 160, 560, 130);
   fill(255);
-  text(String.join("\n", debugText.split(",")), 200+5, 160+5, 520-10, 130-10);
+  text(String.join("\n", debugText.split(",")), 200+5, 160+5, 560-10, 130-10);
 
   if (sendTimer > 0 && millis() - sendTimer > 10000) {
     debugText = "";
