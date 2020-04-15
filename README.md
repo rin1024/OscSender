@@ -8,7 +8,7 @@ OscSender is simple debug tool for OSC.
 
 ### Default OSC Port
 
-Default my OSC port is 8004, but this port is defined in [data/config.json](data/config.json) file. So, you can change this port easily. 
+Default my OSC port is 8004, but this port is defined in [config.json](src/oscSender/data/config.json) file. So, you can change this port easily. 
 
 ### Plugins
 
