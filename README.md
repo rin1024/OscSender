@@ -6,6 +6,10 @@ OscSender is simple debug tool for OSC.
 
 ![](doc/usage_osc_sender.gif)
 
+### Default OSC Port
+
+Default my OSC port is 8004, but this port is defined in [data/config.json](data/config.json) file. So, you can change this port easily. 
+
 ### Plugins
 
 OscSender is currently extended with the following plugins. Instructions on how to use them in your own application are linked below.
