@@ -2,7 +2,7 @@ import oscP5.*;
 import netP5.*;
 import controlP5.*;
 
-final int OSC_MY_PORT = 8004;
+static int MY_OSC_PORT = -1;
 
 ControlP5 cp5;
 OscP5 oscP5;
@@ -12,8 +12,9 @@ long sendTimer = 0;
 
 void setup() {
   size(800,300);
+  loadConfig();
 
-  oscP5 = new OscP5(this, OSC_MY_PORT);
+  oscP5 = new OscP5(this, MY_OSC_PORT);
   cp5 = new ControlP5(this);
   PFont font = createFont("arial", 20);
 
@@ -73,7 +74,7 @@ void draw() {
   text("DO NOT PRESS ENTER KEY", 20, 200);
   
   fill(200);
-  text("MY PORT = " + OSC_MY_PORT, 20, 220);
+  text("MY OSC PORT = " + MY_OSC_PORT, 20, 220);
   
   fill(50);
   stroke(255);
@@ -156,4 +157,10 @@ public void send() {
   );
 
   sendTimer = millis();
+}
+
+void loadConfig() {
+  JSONObject config = loadJSONObject(dataPath("config.json"));
+
+  MY_OSC_PORT = config.getInt("myOscPort");
 }
