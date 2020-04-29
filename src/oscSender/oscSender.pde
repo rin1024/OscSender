@@ -108,7 +108,7 @@ void setup() {
   panel.add(oscParamsField);
 
   {
-    JLabel l = new JLabel("OSC Format");
+    JLabel l = new JLabel("OSC Params");
     l.setBounds(
         360 + 5, 80 + 30, 400, 30);
     panel.add(l);
