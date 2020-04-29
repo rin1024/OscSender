@@ -1,120 +1,172 @@
 import oscP5.*;
 import netP5.*;
-import controlP5.*;
+import java.awt.*; 
+import java.awt.event.*; 
+import javax.swing.*; 
+import javax.swing.event.*;
 
 static int MY_OSC_PORT = -1;
 
-ControlP5 cp5;
+static int W_WIDTH = 800;
+static int W_HEIGHT = 350;
+
 OscP5 oscP5;
 
-String debugText = "";
+JTextField targetIpField;
+JTextField targetPortField;
+JTextField oscAddrField;
+JTextField oscFormatField;
+JTextField oscParamsField;
+JButton sendButton;
+JTextArea logText;
+
 long sendTimer = 0;
 
 void setup() {
-  size(800,300);
+  surface.setVisible(false);
+
   loadConfig();
+  
+  GuiListener listener = new GuiListener(this);
 
+  JPanel panel = new JPanel();
+  panel.setLayout(null);
+
+  // 送信先のIPアドレス
+  targetIpField = new JTextField();
+  targetIpField.addKeyListener(listener);
+  targetIpField.setText("192.168.0.111");
+  targetIpField.setBounds(
+    20, 10, 150, 30);
+  panel.add(targetIpField);
+
+  {
+    JLabel l = new JLabel("Target IP Address"); 
+    l.setBounds(
+        20 + 5, 10 + 30, 150, 30);
+    panel.add(l);
+  }
+
+  // 送信先のポート
+  targetPortField = new JTextField();
+  targetPortField.addKeyListener(listener);
+  targetPortField.setText("8080");
+  targetPortField.setBounds(
+    200, 10, 50, 30);
+  panel.add(targetPortField);
+
+  {
+    JLabel l = new JLabel("Target Port"); 
+    l.setBounds(
+        200 + 5, 10 + 30, 150, 30);
+    panel.add(l);
+  }
+
+  // OSCアドレス
+  oscAddrField = new JTextField();
+  oscAddrField.addKeyListener(listener);
+  oscAddrField.setText("/test");
+  oscAddrField.setBounds(
+    20, 80, 150, 30);
+  panel.add(oscAddrField);
+
+  {
+    JLabel l = new JLabel("OSC Address"); 
+    l.setBounds(
+        20 + 5, 80 + 30, 150, 30);
+    panel.add(l);
+  }
+
+  // OSCフォーマット
+  oscFormatField = new JTextField();
+  oscFormatField.addKeyListener(listener);
+  oscFormatField.setText("ssiiss");
+  oscFormatField.setBounds(
+    200, 80, 100, 30);
+  panel.add(oscFormatField);
+
+  {
+    JLabel l = new JLabel("OSC Format"); 
+    l.setBounds(
+        200 + 5, 80 + 30, 100, 30);
+    panel.add(l);
+  }
+
+  // OSCパラメータ
+  oscParamsField = new JTextField();
+  oscParamsField.addKeyListener(listener);
+  oscParamsField.setText("TEST test 1234 5678 ABCD EFGH");
+  oscParamsField.setBounds(
+    360, 80, 400, 30);
+  panel.add(oscParamsField);
+
+  {
+    JLabel l = new JLabel("OSC Format"); 
+    l.setBounds(
+        360 + 5, 80 + 30, 400, 30);
+    panel.add(l);
+  }
+
+  // 送信ボタン
+  sendButton = new JButton("Send");
+  sendButton.addActionListener(listener); 
+  sendButton.setBounds(
+    20, 160, 80, 30);
+  panel.add(sendButton);
+
+  // デバッグ表示用エリア
+  logText = new JTextArea();
+  logText.setLineWrap(true);
+  logText.setPreferredSize(new Dimension(450, 400));
+  logText.setBounds(
+      205, 165, 550, 120);
+  panel.add(logText);
+
+  // 表示用フレーム
+  JFrame f = new JFrame("Dual Serial Monitor"); 
+  f.add(panel);
+  f.setSize(W_WIDTH, W_HEIGHT); 
+  f.setVisible(true);
+
+  // OSCの接続開始
   oscP5 = new OscP5(this, MY_OSC_PORT);
-  cp5 = new ControlP5(this);
-  PFont font = createFont("arial", 20);
-
-  cp5.addTextfield("target_ip")
-    .setPosition(20,10)
-    .setSize(150,30)
-    .setFont(font)
-    .setValue("192.168.0.100")
-    .setFocus(true)
-    ;
-  cp5.addTextfield("target_port")
-    .setPosition(200,10)
-    .setSize(50,30)
-    .setFont(font)
-    .setValue("9999")
-    ;
-
-  cp5.addTextfield("osc_addr")
-    .setPosition(20,80)
-    .setSize(150,30)
-    .setFont(font)
-    .setValue("/test")
-    ;
-
-  cp5.addTextfield("osc_format")
-    .setPosition(200,80)
-    .setSize(100,30)
-    .setFont(font)
-    .setValue("ssiiss")
-    ;
-
-  cp5.addTextfield("osc_params")
-    .setPosition(360,80)
-    .setSize(400,30)
-    .setFont(font)
-    .setValue("test test_id 0 0 1234 5678")
-    ;
-
-  cp5.addBang("send")
-    .setPosition(20,160)
-    .setSize(80,30)
-    .setFont(font)
-    .getCaptionLabel().align(ControlP5.CENTER, ControlP5.CENTER)
-    ;
-    
-  textFont(font);
-  textAlign(LEFT, TOP);
 }
 
 void draw() {
-  background(0);
-  fill(255);
-  noStroke();
-
-  fill(255, 0, 0);
-  textSize(12);
-  text("DO NOT PRESS ENTER KEY", 20, 200);
-  
-  fill(200);
-  text("MY OSC PORT = " + MY_OSC_PORT, 20, 220);
-  
-  fill(50);
-  stroke(255);
-  rect(200, 160, 560, 130);
-  fill(255);
-  text(String.join("\n", debugText.split(",")), 200+5, 160+5, 560-10, 130-10);
-
   if (sendTimer > 0 && millis() - sendTimer > 10000) {
-    debugText = "";
+    logText.setText("");
     sendTimer = 0;
   }
 }
 
 public void send() {
-  String targetIp = cp5.get(Textfield.class, "target_ip").getText();
+  String debugText = "";
+  String targetIp = targetIpField.getText();
   if (targetIp.equals("")) {
     debugText = "targetIp is null. send failed.";
     return;
   }
 
-  String targetPort = cp5.get(Textfield.class, "target_port").getText();
+  String targetPort = targetPortField.getText();
   if (targetPort.equals("")) {
     debugText = "targetPort is null. send failed.";
     return;
   }
 
-  String oscAddr = cp5.get(Textfield.class, "osc_addr").getText();
+  String oscAddr = oscAddrField.getText();
   if (oscAddr.equals("")) {
     debugText = "oscAddr is null. send failed.";
     return;
   }
 
-  String oscFormat = cp5.get(Textfield.class, "osc_format").getText();
+  String oscFormat = oscFormatField.getText();
   if (oscFormat.equals("")) {
     debugText = "oscFormat is null. send failed.";
     return;
   }
 
-  String[] oscParams = cp5.get(Textfield.class, "osc_params").getText().split(" ");
-  if (cp5.get(Textfield.class, "osc_params").getText().equals("")) {
+  String[] oscParams = oscParamsField.getText().split(" ");
+  if (oscParamsField.getText().equals("")) {
     debugText = "oscParams is null. send failed.";
     return;
   }
@@ -155,7 +207,8 @@ public void send() {
       "addr: " + oscAddr + " " + oscFormat + "," +
       "params: " + String.join(" ", oscParams)
   );
-
+  
+  logText.setText(String.join("\n", debugText.split(",")));
   sendTimer = millis();
 }
 
@@ -163,4 +216,8 @@ void loadConfig() {
   JSONObject config = loadJSONObject(dataPath("config.json"));
 
   MY_OSC_PORT = config.getInt("myOscPort");
+}
+
+void oscEvent(OscMessage _msg) {
+  println("[oscEvent]");
 }
