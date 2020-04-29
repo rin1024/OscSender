@@ -11,6 +11,13 @@ static int W_WIDTH = 800;
 static int W_HEIGHT = 350;
 
 OscP5 oscP5;
+JSONObject config;
+
+String DEFAULT_TARGET_IP_ADDRESS = "192.168.0.111";
+String DEFAULT_TARGET_PORT = "9999";
+String DEFAULT_OSC_ADDR = "/test";
+String DEFAULT_OSC_FORMAT = "ssiiss";
+String DEFAULT_OSC_PARAMS = "TEST test 1234 5678 ABCD EFGH";
 
 JTextField targetIpField;
 JTextField targetPortField;
@@ -35,7 +42,7 @@ void setup() {
   // 送信先のIPアドレス
   targetIpField = new JTextField();
   targetIpField.addKeyListener(listener);
-  targetIpField.setText("192.168.0.111");
+  targetIpField.setText(DEFAULT_TARGET_IP_ADDRESS);
   targetIpField.setBounds(
     20, 10, 150, 30);
   panel.add(targetIpField);
@@ -50,7 +57,7 @@ void setup() {
   // 送信先のポート
   targetPortField = new JTextField();
   targetPortField.addKeyListener(listener);
-  targetPortField.setText("8080");
+  targetPortField.setText(DEFAULT_TARGET_PORT);
   targetPortField.setBounds(
     200, 10, 50, 30);
   panel.add(targetPortField);
@@ -65,7 +72,7 @@ void setup() {
   // OSCアドレス
   oscAddrField = new JTextField();
   oscAddrField.addKeyListener(listener);
-  oscAddrField.setText("/test");
+  oscAddrField.setText(DEFAULT_OSC_ADDR);
   oscAddrField.setBounds(
     20, 80, 150, 30);
   panel.add(oscAddrField);
@@ -80,7 +87,7 @@ void setup() {
   // OSCフォーマット
   oscFormatField = new JTextField();
   oscFormatField.addKeyListener(listener);
-  oscFormatField.setText("ssiiss");
+  oscFormatField.setText(DEFAULT_OSC_FORMAT);
   oscFormatField.setBounds(
     200, 80, 100, 30);
   panel.add(oscFormatField);
@@ -95,7 +102,7 @@ void setup() {
   // OSCパラメータ
   oscParamsField = new JTextField();
   oscParamsField.addKeyListener(listener);
-  oscParamsField.setText("TEST test 1234 5678 ABCD EFGH");
+  oscParamsField.setText(DEFAULT_OSC_PARAMS);
   oscParamsField.setBounds(
     360, 80, 400, 30);
   panel.add(oscParamsField);
@@ -123,7 +130,7 @@ void setup() {
   panel.add(logText);
 
   // 表示用フレーム
-  JFrame f = new JFrame("Dual Serial Monitor"); 
+  JFrame f = new JFrame("Osc Sender"); 
   f.add(panel);
   f.setSize(W_WIDTH, W_HEIGHT); 
   f.setVisible(true);
@@ -165,8 +172,9 @@ public void send() {
     return;
   }
 
-  String[] oscParams = oscParamsField.getText().split(" ");
-  if (oscParamsField.getText().equals("")) {
+  String oscParamsAsString = oscParamsField.getText();
+  String[] oscParams = oscParamsAsString.split(" ");
+  if (oscParamsAsString.equals("")) {
     debugText = "oscParams is null. send failed.";
     return;
   }
@@ -207,17 +215,41 @@ public void send() {
       "addr: " + oscAddr + " " + oscFormat + "," +
       "params: " + String.join(" ", oscParams)
   );
-  
+
+  // 最後の送信ログを次回利用するために記録
+  {
+    JSONObject lastQuery = new JSONObject();
+    lastQuery.setString("targetIpAddress", targetIp);
+    lastQuery.setString("targetPort", targetPort);
+    lastQuery.setString("oscAddr", oscAddr);
+    lastQuery.setString("oscFormat", oscFormat);
+    lastQuery.setString("oscParams", oscParamsAsString);
+
+    config.setJSONObject("lastQuery", lastQuery);
+    saveJSONObject(config, dataPath("config.json"));
+    }
+
   logText.setText(String.join("\n", debugText.split(",")));
   sendTimer = millis();
 }
 
 void loadConfig() {
-  JSONObject config = loadJSONObject(dataPath("config.json"));
+  config = loadJSONObject(dataPath("config.json"));
 
+  // 自分のポートを指定
   MY_OSC_PORT = config.getInt("myOscPort");
+  
+  // 最後に送った記録がある場合
+  JSONObject lastQuery = config.getJSONObject("lastQuery");
+  if (lastQuery != null) {
+    DEFAULT_TARGET_IP_ADDRESS = lastQuery.getString("targetIpAddress");
+    DEFAULT_TARGET_PORT = lastQuery.getString("targetPort");
+    DEFAULT_OSC_ADDR = lastQuery.getString("oscAddr");
+    DEFAULT_OSC_FORMAT = lastQuery.getString("oscFormat");
+    DEFAULT_OSC_PARAMS = lastQuery.getString("oscParams");
+  }
 }
 
 void oscEvent(OscMessage _msg) {
-  println("[oscEvent]");
+  println("[oscEvent]" + _msg.toString());
 }
