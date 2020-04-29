@@ -1,8 +1,8 @@
 import oscP5.*;
 import netP5.*;
-import java.awt.*; 
-import java.awt.event.*; 
-import javax.swing.*; 
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 import javax.swing.event.*;
 
 static int MY_OSC_PORT = -1;
@@ -33,7 +33,7 @@ void setup() {
   surface.setVisible(false);
 
   loadConfig();
-  
+
   GuiListener listener = new GuiListener(this);
 
   JPanel panel = new JPanel();
@@ -48,7 +48,7 @@ void setup() {
   panel.add(targetIpField);
 
   {
-    JLabel l = new JLabel("Target IP Address"); 
+    JLabel l = new JLabel("Target IP Address");
     l.setBounds(
         20 + 5, 10 + 30, 150, 30);
     panel.add(l);
@@ -63,7 +63,7 @@ void setup() {
   panel.add(targetPortField);
 
   {
-    JLabel l = new JLabel("Target Port"); 
+    JLabel l = new JLabel("Target Port");
     l.setBounds(
         200 + 5, 10 + 30, 150, 30);
     panel.add(l);
@@ -78,7 +78,7 @@ void setup() {
   panel.add(oscAddrField);
 
   {
-    JLabel l = new JLabel("OSC Address"); 
+    JLabel l = new JLabel("OSC Address");
     l.setBounds(
         20 + 5, 80 + 30, 150, 30);
     panel.add(l);
@@ -93,7 +93,7 @@ void setup() {
   panel.add(oscFormatField);
 
   {
-    JLabel l = new JLabel("OSC Format"); 
+    JLabel l = new JLabel("OSC Format");
     l.setBounds(
         200 + 5, 80 + 30, 100, 30);
     panel.add(l);
@@ -108,7 +108,7 @@ void setup() {
   panel.add(oscParamsField);
 
   {
-    JLabel l = new JLabel("OSC Format"); 
+    JLabel l = new JLabel("OSC Format");
     l.setBounds(
         360 + 5, 80 + 30, 400, 30);
     panel.add(l);
@@ -116,7 +116,7 @@ void setup() {
 
   // 送信ボタン
   sendButton = new JButton("Send");
-  sendButton.addActionListener(listener); 
+  sendButton.addActionListener(listener);
   sendButton.setBounds(
     20, 160, 80, 30);
   panel.add(sendButton);
@@ -130,9 +130,9 @@ void setup() {
   panel.add(logText);
 
   // 表示用フレーム
-  JFrame f = new JFrame("Osc Sender"); 
+  JFrame f = new JFrame("Osc Sender");
   f.add(panel);
-  f.setSize(W_WIDTH, W_HEIGHT); 
+  f.setSize(W_WIDTH, W_HEIGHT);
   f.setVisible(true);
 
   // OSCの接続開始
@@ -149,85 +149,76 @@ void draw() {
 public void send() {
   String debugText = "";
   String targetIp = targetIpField.getText();
-  if (targetIp.equals("")) {
-    debugText = "targetIp is null. send failed.";
-    return;
-  }
-
   String targetPort = targetPortField.getText();
-  if (targetPort.equals("")) {
-    debugText = "targetPort is null. send failed.";
-    return;
-  }
-
   String oscAddr = oscAddrField.getText();
-  if (oscAddr.equals("")) {
-    debugText = "oscAddr is null. send failed.";
-    return;
-  }
-
   String oscFormat = oscFormatField.getText();
-  if (oscFormat.equals("")) {
-    debugText = "oscFormat is null. send failed.";
-    return;
-  }
-
   String oscParamsAsString = oscParamsField.getText();
   String[] oscParams = oscParamsAsString.split(" ");
-  if (oscParamsAsString.equals("")) {
+
+  if (targetIp.equals("")) {
+    debugText = "targetIp is null. send failed.";
+  }
+  else if (targetPort.equals("")) {
+    debugText = "targetPort is null. send failed.";
+  }
+  else if (oscAddr.equals("")) {
+    debugText = "oscAddr is null. send failed.";
+  }
+  else if (oscFormat.equals("")) {
+    debugText = "oscFormat is null. send failed.";
+  }
+  else if (oscParamsAsString.equals("")) {
     debugText = "oscParams is null. send failed.";
-    return;
   }
-
   // formatの文字数とparamsのlengthがマッチするか
-  if (oscFormat.length() != oscParams.length) {
+  else if (oscFormat.length() != oscParams.length) {
     debugText = "oscFormat size and oscParams size. send failed.";
-    return;
   }
-
-  // メッセージの整形をする
-  OscMessage myMessage = new OscMessage(oscAddr);
-  try {
-    for (int i=0;i<oscParams.length;i++) {
-      char f = oscFormat.charAt(i);
-      // integer
-      if (f == 'i') {
-        myMessage.add(Integer.parseInt(oscParams[i]));
-      }
-      // string
-      else if (f == 's') {
-        myMessage.add(oscParams[i]);
+  else {
+    // メッセージの整形をする
+    OscMessage myMessage = new OscMessage(oscAddr);
+    try {
+      for (int i=0;i<oscParams.length;i++) {
+        char f = oscFormat.charAt(i);
+        // integer
+        if (f == 'i') {
+          myMessage.add(Integer.parseInt(oscParams[i]));
+        }
+        // string
+        else if (f == 's') {
+          myMessage.add(oscParams[i]);
+        }
       }
     }
-  }
-  catch (Exception e) {
-    debugText = e.toString();
-    return;
-  }
-
-  // 送信をする
-  NetAddress targetLocation = new NetAddress(targetIp, Integer.parseInt(targetPort));
-  oscP5.send(myMessage, targetLocation);
-
-  // 送信内容メモ
-  debugText = (
-      "target: " + targetIp + ":" + targetPort + "," +
-      "addr: " + oscAddr + " " + oscFormat + "," +
-      "params: " + String.join(" ", oscParams)
-  );
-
-  // 最後の送信ログを次回利用するために記録
-  {
-    JSONObject lastQuery = new JSONObject();
-    lastQuery.setString("targetIpAddress", targetIp);
-    lastQuery.setString("targetPort", targetPort);
-    lastQuery.setString("oscAddr", oscAddr);
-    lastQuery.setString("oscFormat", oscFormat);
-    lastQuery.setString("oscParams", oscParamsAsString);
-
-    config.setJSONObject("lastQuery", lastQuery);
-    saveJSONObject(config, dataPath("config.json"));
+    catch (Exception e) {
+      debugText = e.toString();
+      return;
     }
+
+    // 送信をする
+    NetAddress targetLocation = new NetAddress(targetIp, Integer.parseInt(targetPort));
+    oscP5.send(myMessage, targetLocation);
+
+    // 送信内容メモ
+    debugText = (
+        "target: " + targetIp + ":" + targetPort + "," +
+        "addr: " + oscAddr + " " + oscFormat + "," +
+        "params: " + String.join(" ", oscParams)
+        );
+
+    // 最後の送信ログを次回利用するために記録
+    {
+      JSONObject lastQuery = new JSONObject();
+      lastQuery.setString("targetIpAddress", targetIp);
+      lastQuery.setString("targetPort", targetPort);
+      lastQuery.setString("oscAddr", oscAddr);
+      lastQuery.setString("oscFormat", oscFormat);
+      lastQuery.setString("oscParams", oscParamsAsString);
+
+      config.setJSONObject("lastQuery", lastQuery);
+      saveJSONObject(config, dataPath("config.json"));
+    }
+  }
 
   logText.setText(String.join("\n", debugText.split(",")));
   sendTimer = millis();
@@ -238,7 +229,7 @@ void loadConfig() {
 
   // 自分のポートを指定
   MY_OSC_PORT = config.getInt("myOscPort");
-  
+
   // 最後に送った記録がある場合
   JSONObject lastQuery = config.getJSONObject("lastQuery");
   if (lastQuery != null) {
