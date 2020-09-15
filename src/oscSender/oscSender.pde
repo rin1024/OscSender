@@ -188,6 +188,10 @@ public void send() {
         else if (f == 's') {
           myMessage.add(oscParams[i]);
         }
+        // float
+        else if (f == 'f') {
+          myMessage.add(Float.parseFloat(oscParams[i]));
+        }
       }
     }
     catch (Exception e) {
