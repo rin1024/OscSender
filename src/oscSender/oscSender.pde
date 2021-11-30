@@ -1,9 +1,10 @@
-import oscP5.*;
-import netP5.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
+import netP5.*;
+import oscP5.*;
+import processing.awt.*;
 
 static int MY_OSC_PORT = -1;
 
@@ -12,6 +13,7 @@ static int W_HEIGHT = 350;
 
 OscP5 oscP5;
 JSONObject config;
+int bgColor;
 
 String DEFAULT_TARGET_IP_ADDRESS = "192.168.0.111";
 String DEFAULT_TARGET_PORT = "9999";
@@ -29,15 +31,16 @@ JTextArea logText;
 
 long sendTimer = 0;
 
-void setup() {
-  surface.setVisible(false);
-
+void settings() {
   loadConfig();
+  size(W_WIDTH, W_HEIGHT);
+}
 
+void setup() {
   GuiListener listener = new GuiListener(this);
 
-  JPanel panel = new JPanel();
-  panel.setLayout(null);
+  Canvas canvas = (Canvas)surface.getNative();
+  JLayeredPane pane = (JLayeredPane)canvas.getParent().getParent();
 
   // 送信先のIPアドレス
   targetIpField = new JTextField();
@@ -45,13 +48,13 @@ void setup() {
   targetIpField.setText(DEFAULT_TARGET_IP_ADDRESS);
   targetIpField.setBounds(
     20, 10, 150, 30);
-  panel.add(targetIpField);
+  pane.add(targetIpField);
 
   {
     JLabel l = new JLabel("Target IP Address");
     l.setBounds(
         20 + 5, 10 + 30, 150, 30);
-    panel.add(l);
+    pane.add(l);
   }
 
   // 送信先のポート
@@ -60,13 +63,13 @@ void setup() {
   targetPortField.setText(DEFAULT_TARGET_PORT);
   targetPortField.setBounds(
     200, 10, 50, 30);
-  panel.add(targetPortField);
+  pane.add(targetPortField);
 
   {
     JLabel l = new JLabel("Target Port");
     l.setBounds(
         200 + 5, 10 + 30, 150, 30);
-    panel.add(l);
+    pane.add(l);
   }
 
   // OSCアドレス
@@ -75,13 +78,13 @@ void setup() {
   oscAddrField.setText(DEFAULT_OSC_ADDR);
   oscAddrField.setBounds(
     20, 80, 150, 30);
-  panel.add(oscAddrField);
+  pane.add(oscAddrField);
 
   {
     JLabel l = new JLabel("OSC Address");
     l.setBounds(
         20 + 5, 80 + 30, 150, 30);
-    panel.add(l);
+    pane.add(l);
   }
 
   // OSCフォーマット
@@ -90,13 +93,13 @@ void setup() {
   oscFormatField.setText(DEFAULT_OSC_FORMAT);
   oscFormatField.setBounds(
     200, 80, 100, 30);
-  panel.add(oscFormatField);
+  pane.add(oscFormatField);
 
   {
     JLabel l = new JLabel("OSC Format");
     l.setBounds(
         200 + 5, 80 + 30, 100, 30);
-    panel.add(l);
+    pane.add(l);
   }
 
   // OSCパラメータ
@@ -105,13 +108,13 @@ void setup() {
   oscParamsField.setText(DEFAULT_OSC_PARAMS);
   oscParamsField.setBounds(
     360, 80, 400, 30);
-  panel.add(oscParamsField);
+  pane.add(oscParamsField);
 
   {
     JLabel l = new JLabel("OSC Params");
     l.setBounds(
         360 + 5, 80 + 30, 400, 30);
-    panel.add(l);
+    pane.add(l);
   }
 
   // 送信ボタン
@@ -119,7 +122,7 @@ void setup() {
   sendButton.addActionListener(listener);
   sendButton.setBounds(
     20, 160, 80, 30);
-  panel.add(sendButton);
+  pane.add(sendButton);
 
   // デバッグ表示用エリア
   logText = new JTextArea();
@@ -127,19 +130,18 @@ void setup() {
   logText.setPreferredSize(new Dimension(450, 400));
   logText.setBounds(
       205, 165, 550, 120);
-  panel.add(logText);
+  pane.add(logText);
 
-  // 表示用フレーム
-  JFrame f = new JFrame("Osc Sender");
-  f.add(panel);
-  f.setSize(W_WIDTH, W_HEIGHT);
-  f.setVisible(true);
+  // set background color
+  bgColor = canvas.getBackground().getRGB();
+  background(bgColor);
 
   // OSCの接続開始
   oscP5 = new OscP5(this, MY_OSC_PORT);
 }
 
 void draw() {
+  background(bgColor);
   if (sendTimer > 0 && millis() - sendTimer > 10000) {
     logText.setText("");
     sendTimer = 0;
