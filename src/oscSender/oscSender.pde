@@ -1,5 +1,8 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Date;
+import java.util.StringJoiner ; 
+import java.util.Arrays ;
 import javax.swing.*;
 import javax.swing.event.*;
 import netP5.*;
@@ -32,6 +35,9 @@ JTextArea logText;
 long sendTimer = 0;
 
 void settings() {
+  System.setProperty("logging.dir", dataPath("../log/"));
+  PropertyConfigurator.configure(dataPath("log4j.properties"));
+
   loadConfig();
   size(W_WIDTH, W_HEIGHT);
 }
