@@ -8,6 +8,7 @@ import javax.swing.event.*;
 import netP5.*;
 import oscP5.*;
 import processing.awt.*;
+import jp.ncl.awt.AwtGuiListener;
 
 static int MY_OSC_PORT = -1;
 
@@ -24,6 +25,7 @@ String DEFAULT_OSC_ADDR = "/test";
 String DEFAULT_OSC_FORMAT = "ssiiss";
 String DEFAULT_OSC_PARAMS = "TEST test 1234 5678 ABCD EFGH";
 
+AwtGuiListener listener;
 JTextField targetIpField;
 JTextField targetPortField;
 JTextField oscAddrField;
@@ -43,7 +45,7 @@ void settings() {
 }
 
 void setup() {
-  GuiListener listener = new GuiListener(this);
+  listener = new AwtGuiListener(this);
 
   Canvas canvas = (Canvas)surface.getNative();
   JLayeredPane pane = (JLayeredPane)canvas.getParent().getParent();
@@ -151,6 +153,14 @@ void draw() {
   if (sendTimer > 0 && millis() - sendTimer > 10000) {
     logText.setText("");
     sendTimer = 0;
+  }
+
+  if (listener.actionCheck()) {
+      // 送信ボタンが押された
+      if (listener.getLastActionEvent().getSource() == sendButton) {
+        send();
+        listener.actionChecked();
+      }
   }
 }
 
